@@ -1,4 +1,4 @@
-"""MCP tool: list Bloomreach scenarios (campaigns)."""
+"""MCP tool: list Bloomreach Engagement scenarios (campaigns)."""
 
 from __future__ import annotations
 
@@ -16,16 +16,25 @@ def register_scenarios_tools(
 ) -> None:
     @mcp.tool()
     async def list_scenarios(
+        status: str | None = None,
         audience_type: str | None = None,
     ) -> list[dict[str, Any]]:
         """List scenarios (campaigns) from Bloomreach Engagement.
 
+        Each scenario includes its targeting segments, status, and audience size
+        as returned by the Bloomreach API.
+
         Args:
-            audience_type: Optional filter applied as a case-insensitive
-                substring match against the scenario's audience or name fields
-                (e.g. "paid audience").  When omitted, all scenarios are returned.
+            status: Optional filter by scenario status, e.g. "active", "paused",
+                "draft". Case-insensitive exact match.
+            audience_type: Optional filter applied as a case-insensitive substring
+                match against audience or name fields (e.g. "paid").
         """
         scenarios = await get_client().list_scenarios()
+
+        if status:
+            needle = status.lower()
+            scenarios = [s for s in scenarios if str(s.get("status", "")).lower() == needle]
 
         if audience_type:
             needle = audience_type.lower()

@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **Scope:** This MCP server covers the Bloomreach **Engagement** API (formerly Exponea) only — `https://api.exponea.com`. The Bloomreach Discovery API (product search, recommendations) is out of scope.
+
 ## Development Commands
 
 ```bash

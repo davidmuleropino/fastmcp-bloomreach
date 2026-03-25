@@ -1,13 +1,15 @@
 # fastmcp-bloomreach
 
-A [FastMCP](https://gofastmcp.com) server that exposes the [Bloomreach Engagement API](https://documentation.bloomreach.com/engagement/reference/welcome) as MCP tools for use with Claude Desktop, Claude Code, and any MCP-compatible client.
+A [FastMCP](https://gofastmcp.com) server that exposes the [Bloomreach **Engagement** API](https://documentation.bloomreach.com/engagement/reference/welcome) as MCP tools for use with Claude Desktop, Claude Code, and any MCP-compatible client.
+
+> **Scope:** This server covers the Bloomreach **Engagement** API (formerly Exponea) only. The Bloomreach Discovery API (product search, recommendations) is out of scope.
 
 ## Tools
 
 | Tool | Description |
 |------|-------------|
-| `list_scenarios` | List Bloomreach scenarios (campaigns), optionally filtered by audience type |
-| `get_email_campaign_metrics` | Get open rate, click rate from delivered, and click rate from opened for an email campaign over the last N days |
+| `list_scenarios` | List scenarios (campaigns) with their targeting segments, status, and audience size. Filterable by status and audience type. |
+| `get_email_campaign_metrics` | Get aggregate email metrics (delivered, opened, clicked, bounced, unsubscribed) plus derived rates for a campaign over a date range. |
 
 ## Installation
 

@@ -1,4 +1,4 @@
-"""MCP tool: Bloomreach email campaign engagement metrics."""
+"""MCP tool: Bloomreach Engagement email campaign metrics."""
 
 from __future__ import annotations
 
@@ -16,16 +16,23 @@ if TYPE_CHECKING:
 
 class EmailMetricsResult(BaseModel):
     campaign_id: str
-    period_days: int
+    start_date: str
+    end_date: str
     delivered: int
     opened: int
     clicked: int
+    bounced: int
+    unsubscribed: int
     open_rate: float
     """Opened / Delivered"""
     click_rate_from_delivered: float
     """Clicked / Delivered"""
     click_rate_from_opened: float
     """Clicked / Opened"""
+    bounce_rate: float
+    """Bounced / Delivered"""
+    unsubscribe_rate: float
+    """Unsubscribed / Delivered"""
 
 
 def _safe_rate(numerator: int, denominator: int) -> float:
@@ -46,7 +53,7 @@ def _parse_csv_metrics(csv_text: str) -> dict[str, int]:
 
 
 def _extract_int(data: dict[str, Any], *keys: str) -> int:
-    """Return the first non-None value from a list of candidate key names."""
+    """Return the integer value of the first matching key found in data."""
     for key in keys:
         val = data.get(key)
         if val is not None:
@@ -64,18 +71,22 @@ def register_email_metrics_tools(
     @mcp.tool()
     async def get_email_campaign_metrics(
         campaign_id: str,
-        days: int = 30,
+        start_date: str,
+        end_date: str,
     ) -> EmailMetricsResult:
-        """Get email engagement metrics for a Bloomreach campaign.
+        """Get aggregate email engagement metrics for a Bloomreach campaign.
 
-        Returns open rate, click rate from delivered, and click rate from
-        opened for the specified campaign over the last N days.
+        Returns delivered, opened, clicked, bounced, and unsubscribed counts
+        plus derived rates for the specified campaign over a date range.
 
         Args:
             campaign_id: The Bloomreach scenario/campaign ID.
-            days: Number of past days to aggregate (default 30).
+            start_date: Start of the reporting period in YYYY-MM-DD format (inclusive).
+            end_date: End of the reporting period in YYYY-MM-DD format (inclusive).
         """
-        data = await get_client().get_email_campaign_metrics(campaign_id, days=days)
+        data = await get_client().get_email_campaign_metrics(
+            campaign_id, start_date=start_date, end_date=end_date
+        )
 
         delivered = _extract_int(
             data, "delivered", "emails_delivered", "emailsDelivered", "total_delivered"
@@ -84,21 +95,32 @@ def register_email_metrics_tools(
             data, "opened", "emails_opened", "emailsOpened", "unique_opens", "total_opens"
         )
         clicked = _extract_int(
+            data, "clicked", "emails_clicked", "emailsClicked", "unique_clicks", "total_clicks"
+        )
+        bounced = _extract_int(
+            data, "bounced", "bounces", "hard_bounces", "hardBounces", "total_bounces"
+        )
+        unsubscribed = _extract_int(
             data,
-            "clicked",
-            "emails_clicked",
-            "emailsClicked",
-            "unique_clicks",
-            "total_clicks",
+            "unsubscribed",
+            "unsubscribes",
+            "opt_outs",
+            "optOuts",
+            "total_unsubscribes",
         )
 
         return EmailMetricsResult(
             campaign_id=campaign_id,
-            period_days=days,
+            start_date=start_date,
+            end_date=end_date,
             delivered=delivered,
             opened=opened,
             clicked=clicked,
+            bounced=bounced,
+            unsubscribed=unsubscribed,
             open_rate=_safe_rate(opened, delivered),
             click_rate_from_delivered=_safe_rate(clicked, delivered),
             click_rate_from_opened=_safe_rate(clicked, opened),
+            bounce_rate=_safe_rate(bounced, delivered),
+            unsubscribe_rate=_safe_rate(unsubscribed, delivered),
         )

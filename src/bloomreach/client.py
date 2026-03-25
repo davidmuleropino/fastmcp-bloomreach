@@ -95,6 +95,9 @@ class BloomreachClient:
         """Fetch all scenarios (campaigns) from the Engagement API.
 
         Endpoint: GET /track/v2/projects/{project_token}/campaigns
+
+        Each item includes campaign metadata such as name, status, targeting
+        segments, and audience size as provided by the Bloomreach API.
         """
         path = f"/track/v2/projects/{self._project_token}/campaigns"
         data = await self._request("GET", path)
@@ -111,12 +114,17 @@ class BloomreachClient:
     async def get_email_campaign_metrics(
         self,
         campaign_id: str,
-        days: int = 30,
+        start_date: str,
+        end_date: str,
     ) -> dict[str, Any]:
-        """Fetch aggregated email metrics for a single campaign.
+        """Fetch aggregate email metrics for a campaign over a date range.
 
         Endpoint: GET /track/v2/projects/{project_token}/campaigns/{id}/metrics
-        Query params: days=N
+        Query params: start_date=YYYY-MM-DD, end_date=YYYY-MM-DD
+
+        Metrics include delivered, opened, clicked, bounced, and unsubscribed.
         """
         path = f"/track/v2/projects/{self._project_token}/campaigns/{campaign_id}/metrics"
-        return await self._request("GET", path, params={"days": days})
+        return await self._request(
+            "GET", path, params={"start_date": start_date, "end_date": end_date}
+        )
