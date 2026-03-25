@@ -109,6 +109,14 @@ class BloomreachClient:
             or (data if isinstance(data, list) else [])
         )
 
+    async def get_scenario(self, campaign_id: str) -> dict[str, Any]:
+        """Fetch full detail for a single scenario (campaign).
+
+        Endpoint: GET /track/v2/projects/{project_token}/campaigns/{campaign_id}
+        """
+        path = f"/track/v2/projects/{self._project_token}/campaigns/{campaign_id}"
+        return await self._request("GET", path)
+
     # ---- Email Campaign Metrics ----
 
     async def get_email_campaign_metrics(
@@ -128,3 +136,78 @@ class BloomreachClient:
         return await self._request(
             "GET", path, params={"start_date": start_date, "end_date": end_date}
         )
+
+    # ---- Analysis API (CSV) ----
+
+    async def get_analysis(self, analysis_type: str, analysis_id: str) -> str:
+        """Run a saved analysis and return the raw CSV response text.
+
+        Endpoint: POST /data/v2/projects/{project_token}/analyses/{analysis_type}
+
+        Args:
+            analysis_type: One of "funnel", "report", "retention", "segmentation".
+            analysis_id: The ID of the saved analysis in Bloomreach.
+        """
+        path = f"/data/v2/projects/{self._project_token}/analyses/{analysis_type}"
+        return await self._request_csv("POST", path, json={"id": analysis_id})
+
+    # ---- Customer API ----
+
+    async def get_customer_attributes(
+        self,
+        customer_id: str,
+        attributes: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Fetch customer attributes of the specified types.
+
+        Endpoint: POST /data/v2/projects/{project_token}/customers/attributes
+        """
+        path = f"/data/v2/projects/{self._project_token}/customers/attributes"
+        return await self._request(
+            "POST",
+            path,
+            json={
+                "customer_ids": {"registered": customer_id},
+                "attributes": attributes,
+            },
+        )
+
+    async def export_customer(self, customer_id: str) -> dict[str, Any]:
+        """Export all data stored for a customer.
+
+        Endpoint: POST /data/v2/projects/{project_token}/customers/export-one
+        """
+        path = f"/data/v2/projects/{self._project_token}/customers/export-one"
+        return await self._request("POST", path, json={"customer_ids": {"registered": customer_id}})
+
+    # ---- Consent API ----
+
+    async def list_consent_categories(self) -> list[dict[str, Any]]:
+        """List all consent categories for the project.
+
+        Endpoint: GET /data/v2/projects/{project_token}/consent/categories
+        """
+        path = f"/data/v2/projects/{self._project_token}/consent/categories"
+        data = await self._request("GET", path)
+        return (
+            data.get("data") or data.get("categories") or (data if isinstance(data, list) else [])
+        )
+
+    async def get_customer_consents(self, customer_id: str) -> dict[str, Any]:
+        """Fetch consent status for a customer.
+
+        Endpoint: POST /data/v2/projects/{project_token}/customers/consents
+        """
+        path = f"/data/v2/projects/{self._project_token}/customers/consents"
+        return await self._request("POST", path, json={"customer_ids": {"registered": customer_id}})
+
+    async def anonymize_customer(self, customer_id: str) -> dict[str, Any]:
+        """Anonymize a customer by removing all PII properties.
+
+        Endpoint: POST /data/v2/projects/{project_token}/customers/anonymize
+
+        WARNING: Removes all properties marked as Private (PII) in Bloomreach
+        Data Manager. This action is irreversible.
+        """
+        path = f"/data/v2/projects/{self._project_token}/customers/anonymize"
+        return await self._request("POST", path, json={"customer_ids": {"registered": customer_id}})

@@ -1,4 +1,4 @@
-"""MCP tool: list Bloomreach Engagement scenarios (campaigns)."""
+"""MCP tools: list and retrieve Bloomreach Engagement scenarios (campaigns)."""
 
 from __future__ import annotations
 
@@ -46,3 +46,15 @@ def register_scenarios_tools(
             ]
 
         return scenarios
+
+    @mcp.tool()
+    async def get_scenario(campaign_id: str) -> dict[str, Any]:
+        """Get full detail for a single Bloomreach scenario (campaign).
+
+        Returns the scenario's name, status, audience configuration, targeting
+        segments, audience size, and all other metadata provided by the API.
+
+        Args:
+            campaign_id: The Bloomreach scenario/campaign ID to retrieve.
+        """
+        return await get_client().get_scenario(campaign_id)

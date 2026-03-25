@@ -1,4 +1,4 @@
-"""MCP tool: Bloomreach Engagement email campaign metrics."""
+"""MCP tools: Bloomreach Engagement email campaign metrics and analysis API."""
 
 from __future__ import annotations
 
@@ -52,6 +52,12 @@ def _parse_csv_metrics(csv_text: str) -> dict[str, int]:
     return totals
 
 
+def _parse_csv(csv_text: str) -> list[dict[str, str]]:
+    """Parse a Bloomreach Analysis API CSV response into a list of row dicts."""
+    reader = csv.DictReader(io.StringIO(csv_text))
+    return [dict(row) for row in reader]
+
+
 def _extract_int(data: dict[str, Any], *keys: str) -> int:
     """Return the integer value of the first matching key found in data."""
     for key in keys:
@@ -64,7 +70,7 @@ def _extract_int(data: dict[str, Any], *keys: str) -> int:
     return 0
 
 
-def register_email_metrics_tools(
+def register_analytics_tools(
     mcp: "FastMCP",
     get_client: Callable[[], "BloomreachClient"],
 ) -> None:
@@ -124,3 +130,55 @@ def register_email_metrics_tools(
             bounce_rate=_safe_rate(bounced, delivered),
             unsubscribe_rate=_safe_rate(unsubscribed, delivered),
         )
+
+    @mcp.tool()
+    async def get_funnel(analysis_id: str) -> list[dict[str, str]]:
+        """Run a saved funnel analysis and return results as a list of row dicts.
+
+        Fetches the analysis identified by analysis_id from the Bloomreach
+        Analysis API and parses the CSV response into structured records.
+
+        Args:
+            analysis_id: The ID of the saved funnel analysis in Bloomreach.
+        """
+        csv_text = await get_client().get_analysis("funnel", analysis_id)
+        return _parse_csv(csv_text)
+
+    @mcp.tool()
+    async def get_report(analysis_id: str) -> list[dict[str, str]]:
+        """Run a saved report analysis and return results as a list of row dicts.
+
+        Fetches the analysis identified by analysis_id from the Bloomreach
+        Analysis API and parses the CSV response into structured records.
+
+        Args:
+            analysis_id: The ID of the saved report analysis in Bloomreach.
+        """
+        csv_text = await get_client().get_analysis("report", analysis_id)
+        return _parse_csv(csv_text)
+
+    @mcp.tool()
+    async def get_retention(analysis_id: str) -> list[dict[str, str]]:
+        """Run a saved retention analysis and return results as a list of row dicts.
+
+        Fetches the analysis identified by analysis_id from the Bloomreach
+        Analysis API and parses the CSV response into structured records.
+
+        Args:
+            analysis_id: The ID of the saved retention analysis in Bloomreach.
+        """
+        csv_text = await get_client().get_analysis("retention", analysis_id)
+        return _parse_csv(csv_text)
+
+    @mcp.tool()
+    async def get_segmentation(analysis_id: str) -> list[dict[str, str]]:
+        """Run a saved segmentation analysis and return results as a list of row dicts.
+
+        Fetches the analysis identified by analysis_id from the Bloomreach
+        Analysis API and parses the CSV response into structured records.
+
+        Args:
+            analysis_id: The ID of the saved segmentation analysis in Bloomreach.
+        """
+        csv_text = await get_client().get_analysis("segmentation", analysis_id)
+        return _parse_csv(csv_text)

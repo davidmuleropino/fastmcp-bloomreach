@@ -16,7 +16,9 @@ from starlette.responses import JSONResponse
 load_dotenv()
 
 from bloomreach.client import BloomreachClient  # noqa: E402
-from bloomreach.tools.email_metrics import register_email_metrics_tools  # noqa: E402
+from bloomreach.tools.analytics import register_analytics_tools  # noqa: E402
+from bloomreach.tools.consent import register_consent_tools  # noqa: E402
+from bloomreach.tools.customer import register_customer_tools  # noqa: E402
 from bloomreach.tools.scenarios import register_scenarios_tools  # noqa: E402
 
 logger = logging.getLogger(__name__)
@@ -59,7 +61,9 @@ async def lifespan(app: FastMCP) -> AsyncIterator[None]:
 mcp = FastMCP(name="Bloomreach", lifespan=lifespan)
 
 register_scenarios_tools(mcp, get_client)
-register_email_metrics_tools(mcp, get_client)
+register_analytics_tools(mcp, get_client)
+register_customer_tools(mcp, get_client)
+register_consent_tools(mcp, get_client)
 
 
 @mcp.custom_route("/health", methods=["GET"])
