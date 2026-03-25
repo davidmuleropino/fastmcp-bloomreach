@@ -1,0 +1,24 @@
+# Secrets
+.env
+!.env.example
+
+# Claude private docs
+.claude/docs/
+
+# Python artifacts
+__pycache__/
+.ruff_cache/
+.pytest_cache/
+.venv/
+venv/
+dist/
+*.egg-info/
+
+# Tests excluded from published wheel
+tests/
+
+# IDE / OS
+.DS_Store
+Thumbs.db
+*.pyc
+uv.lock
