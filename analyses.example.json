@@ -1,0 +1,14 @@
+{
+  "reports": {
+    "6047403995f0c479c3c7219d": "Email Campaign Performance"
+  },
+  "funnels": {
+    "5f3e2a1b8c4d7f0012345678": "Checkout Funnel"
+  },
+  "retentions": {
+    "60a1b2c3d4e5f60011223344": "Weekly Retention"
+  },
+  "segmentations": {
+    "61b2c3d4e5f6a70022334455": "High-Value Customers"
+  }
+}

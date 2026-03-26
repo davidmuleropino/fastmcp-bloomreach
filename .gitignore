@@ -2,8 +2,16 @@
 .env
 !.env.example
 
+# Analysis ID config (copy from analyses.example.json)
+analyses.json
+!analyses.example.json
+
 # Claude private docs
 .claude/docs/
+
+# MCP client configs (contain local paths and credentials)
+.mcp.json
+.cursor/mcp.json
 
 # Python artifacts
 __pycache__/
@@ -21,4 +29,3 @@ tests/
 .DS_Store
 Thumbs.db
 *.pyc
-uv.lock
