@@ -25,7 +25,9 @@ class BloomreachClient:
     """
 
     def __init__(self) -> None:
-        self._base_url: str = os.environ["BLOOMREACH_BASE_URL"].rstrip("/")
+        self._base_url: str = os.environ.get(
+            "BLOOMREACH_BASE_URL", "https://api.exponea.com"
+        ).rstrip("/")
         self._project_token: str = os.environ["BLOOMREACH_PROJECT_TOKEN"]
         self._api_key_id: str = os.environ["BLOOMREACH_API_KEY_ID"]
         self._api_secret: str = os.environ["BLOOMREACH_API_SECRET"]
@@ -89,34 +91,6 @@ class BloomreachClient:
         response.raise_for_status()
         return response.text
 
-    # ---- Scenarios / Campaigns ----
-
-    async def list_scenarios(self) -> list[dict[str, Any]]:
-        """Fetch all scenarios (campaigns) from the Engagement API.
-
-        Endpoint: GET /track/v2/projects/{project_token}/campaigns
-
-        Each item includes campaign metadata such as name, status, targeting
-        segments, and audience size as provided by the Bloomreach API.
-        """
-        path = f"/track/v2/projects/{self._project_token}/campaigns"
-        data = await self._request("GET", path)
-        # Bloomreach wraps results; key may vary across API versions
-        return (
-            data.get("data")
-            or data.get("campaigns")
-            or data.get("results")
-            or (data if isinstance(data, list) else [])
-        )
-
-    async def get_scenario(self, campaign_id: str) -> dict[str, Any]:
-        """Fetch full detail for a single scenario (campaign).
-
-        Endpoint: GET /track/v2/projects/{project_token}/campaigns/{campaign_id}
-        """
-        path = f"/track/v2/projects/{self._project_token}/campaigns/{campaign_id}"
-        return await self._request("GET", path)
-
     # ---- Email Campaign Metrics ----
 
     async def get_email_campaign_metrics(
@@ -149,7 +123,9 @@ class BloomreachClient:
             analysis_id: The ID of the saved analysis in Bloomreach.
         """
         path = f"/data/v2/projects/{self._project_token}/analyses/{analysis_type}"
-        return await self._request_csv("POST", path, json={"id": analysis_id})
+        return await self._request_csv(
+            "POST", path, json={"analysis_id": analysis_id, "format": "csv"}
+        )
 
     # ---- Customer API ----
 
@@ -179,6 +155,17 @@ class BloomreachClient:
         """
         path = f"/data/v2/projects/{self._project_token}/customers/export-one"
         return await self._request("POST", path, json={"customer_ids": {"registered": customer_id}})
+
+    # ---- Catalogs API ----
+
+    async def list_catalogs(self) -> list[dict[str, Any]]:
+        """List all catalogs for the project.
+
+        Endpoint: GET /data/v2/projects/{project_token}/catalogs
+        """
+        path = f"/data/v2/projects/{self._project_token}/catalogs"
+        data = await self._request("GET", path)
+        return data.get("data") or data.get("catalogs") or (data if isinstance(data, list) else [])
 
     # ---- Consent API ----
 

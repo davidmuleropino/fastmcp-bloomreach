@@ -1,0 +1,40 @@
+substitutions:
+  _REGION: us-central1
+  _SERVICE: bloomreach-engagement-mcp
+  _REPO: bloomreach-engagement
+
+steps:
+  # Build the Docker image and tag with both commit SHA and latest
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --tag
+      - $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA
+      - --tag
+      - $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:latest
+      - .
+
+  # Push all tags to Artifact Registry
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE
+
+  # Deploy to Cloud Run
+  # Note: authentication (--no-allow-unauthenticated) must be set manually via
+  # the Cloud Run console — org policy blocks allUsers assignment via CLI.
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - $_SERVICE
+      - --image=$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_SERVICE:$COMMIT_SHA
+      - --region=$_REGION
+      - --platform=managed
+      - --port=8080
+      - --memory=512Mi
+      - --set-env-vars=BLOOMREACH_BASE_URL=https://uk1-api.eng.bloomreach.com
+      - --set-secrets=BLOOMREACH_PROJECT_TOKEN=bloomreach-project-token:latest,BLOOMREACH_API_KEY_ID=bloomreach-api-key-id:latest,BLOOMREACH_API_SECRET=bloomreach-api-secret:latest,BLOOMREACH_MCP_API_KEY=bloomreach-mcp-api-key:latest
+      - --project=$PROJECT_ID

@@ -16,17 +16,18 @@ from starlette.responses import JSONResponse
 load_dotenv()
 
 from bloomreach.client import BloomreachClient  # noqa: E402
+from bloomreach.resources.analyses import register_analyses_resources  # noqa: E402
+from bloomreach.tools.analyses_config import register_analyses_config_tools  # noqa: E402
 from bloomreach.tools.analytics import register_analytics_tools  # noqa: E402
+from bloomreach.tools.catalogs import register_catalogs_tools  # noqa: E402
 from bloomreach.tools.consent import register_consent_tools  # noqa: E402
 from bloomreach.tools.customer import register_customer_tools  # noqa: E402
-from bloomreach.tools.scenarios import register_scenarios_tools  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
 _client: BloomreachClient | None = None
 
 _REQUIRED_ENV_VARS = [
-    "BLOOMREACH_BASE_URL",
     "BLOOMREACH_PROJECT_TOKEN",
     "BLOOMREACH_API_KEY_ID",
     "BLOOMREACH_API_SECRET",
@@ -58,31 +59,33 @@ async def lifespan(app: FastMCP) -> AsyncIterator[None]:
         logger.info("Bloomreach client stopped")
 
 
-mcp = FastMCP(name="Bloomreach", lifespan=lifespan)
-
-register_scenarios_tools(mcp, get_client)
-register_analytics_tools(mcp, get_client)
-register_customer_tools(mcp, get_client)
-register_consent_tools(mcp, get_client)
-
-
-@mcp.custom_route("/health", methods=["GET"])
-async def health(_request: Request) -> JSONResponse:
-    return JSONResponse({"status": "ok"})
-
-
 class APIKeyMiddleware(BaseHTTPMiddleware):
-    """Require Bearer token for all HTTP MCP requests (skips /health)."""
+    """Validates Bearer token for all requests except /health."""
 
     async def dispatch(self, request: Request, call_next):
         if request.url.path == "/health":
             return await call_next(request)
-        api_key = os.environ.get("BLOOMREACH_MCP_API_KEY", "")
+        api_key = os.environ.get("BLOOMREACH_MCP_API_KEY")
         if api_key:
             auth = request.headers.get("Authorization", "")
             if auth != f"Bearer {api_key}":
                 return JSONResponse({"error": "Unauthorized"}, status_code=401)
         return await call_next(request)
+
+
+mcp = FastMCP(name="Bloomreach", lifespan=lifespan)
+
+register_analytics_tools(mcp, get_client)
+register_catalogs_tools(mcp, get_client)
+register_customer_tools(mcp, get_client)
+register_consent_tools(mcp, get_client)
+register_analyses_resources(mcp)
+register_analyses_config_tools(mcp)
+
+
+@mcp.custom_route("/health", methods=["GET"])
+async def health(_request: Request) -> JSONResponse:
+    return JSONResponse({"status": "ok"})
 
 
 # Starlette app used in HTTP transport mode
